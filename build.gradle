@@ -67,7 +67,7 @@ dependencies {
 
 	//testCompile "org.springframework.boot:spring-boot-starter-test:1.0.2.RELEASE"
 	
-	compile fileTree(dir: 'exjello-1.2.1', include: '*.jar')
+	// compile fileTree(dir: 'exjello-1.2.1', include: '*.jar')
 	compile 'javax.mail:mail:1.4'
 
 }

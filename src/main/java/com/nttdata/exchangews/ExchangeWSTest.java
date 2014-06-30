@@ -49,7 +49,7 @@ import com.nttdata.exchangews.utils.TrustAllX509TrustManager;
  *
  */
 @Controller
-@EnableAutoConfiguration(exclude=TestExJello.class)
+@EnableAutoConfiguration()
 @ComponentScan
 public class ExchangeWSTest implements InitializingBean {
 
