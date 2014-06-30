@@ -52,7 +52,7 @@ dependencies {
 
 	compile fileTree(dir: 'libs', include: '*.jar')
 	
-	compile files('EWSJavaAPI_1.2/EWSJavaAPI_1.2.jar')
+	// compile files('EWSJavaAPI_1.2/EWSJavaAPI_1.2.jar')
 
 	
 	// EWS Dependencies

@@ -7,20 +7,19 @@ package com.nttdata.exchangews;
  * 
  */
 
-import java.text.SimpleDateFormat;
-import java.util.GregorianCalendar;
+import java.io.File;
 import java.util.Properties;
-import java.util.TimeZone;
 
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.Session;
 import javax.mail.Store;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.params.HttpClientParams;
 import org.exjello.mail.ExchangeConstants;
 import org.exjello.mail.ExchangeStore;
+
+import com.nttdata.exchangews.utils.InstallCert;
+import com.nttdata.exchangews.utils.TrustAllX509TrustManager;
 
 /**
  * You can use this test program in console mode with parameters or with
@@ -34,16 +33,23 @@ public class TestExJello {
 	/*
 	 * Static field if you whant to test it without console parameters
 	 */
-	private static String server = "https://zzzzzowa.it.nttdata-emea.comssssss/owa";
+	private static String server = "https://localhost/owa";
 	// Username sample: DOMAIN\\account:mailbox@mydomain.com
-	private static String username = "valueteam\\giorgig";
-	private static String password = "bad";
+	private static String username = "Administrator";
+	private static String password = "pass@word1";
 	private static String folder = "Inbox";
 
 	public static final String FORMAT_ISO_8601 = "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
 	public static void main(String argv[]) throws Exception {
 		String lastCheck = "";
+
+		// See here http://www.mkyong.com/webservices/jax-ws/suncertpathbuilderexception-unable-to-find-valid-certification-path-to-requested-target/
+		// for a passible solution
+
+
+		InstallCert.loadTrustStore(new File("jssecacerts"));
+		TrustAllX509TrustManager.trustEveryOne();
 
 		CheckMail(argv, lastCheck);
 		//		
@@ -137,8 +143,8 @@ public class TestExJello {
 
 			// folder.open(Folder.READ_WRITE);
 			folder.open(Folder.READ_ONLY);
-
-			Message[] msgs = folder.getMessages();
+			System.out.println("Asking for messages...");
+			Message[] msgs = folder.getMessages(1,5);
 			System.out.println("Got " + msgs.length + " new messages");
 
 			for (Message msg : msgs) {

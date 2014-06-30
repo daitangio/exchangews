@@ -1,13 +1,24 @@
 package com.nttdata.exchangews;
 
+import java.awt.AWTException;
+import java.awt.CheckboxMenuItem;
+import java.awt.Image;
+import java.awt.MenuItem;
+import java.awt.PopupMenu;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.io.File;
 import java.net.URI;
-import java.awt.*;
-import java.awt.event.*;
 import java.net.URL;
 
-import javax.swing.*;
+import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import microsoft.exchange.webservices.data.EmailMessage;
 import microsoft.exchange.webservices.data.ExchangeCredentials;
@@ -24,12 +35,13 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.test.SpringApplicationContextLoader;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.context.support.SpringBeanAutowiringSupport;
+
+import com.nttdata.exchangews.utils.InstallCert;
+import com.nttdata.exchangews.utils.TrustAllX509TrustManager;
 
 /**
  * Main entry point
@@ -37,7 +49,7 @@ import org.springframework.web.context.support.SpringBeanAutowiringSupport;
  *
  */
 @Controller
-@EnableAutoConfiguration()
+@EnableAutoConfiguration(exclude=TestExJello.class)
 @ComponentScan
 public class ExchangeWSTest implements InitializingBean {
 
@@ -78,10 +90,11 @@ public class ExchangeWSTest implements InitializingBean {
 	String testEWS() throws Exception {
 		String r="Login test:";
 
-		ExchangeService service = new ExchangeService(ExchangeVersion.Exchange2010_SP2);
+		// TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+		ExchangeService service = new ExchangeService(ExchangeVersion.Exchange2010_SP1); /*SP2 does not work */
 
 		ExchangeCredentials credentials = new WebCredentials(useremail,
-				password,domain);
+				password/*,domain*/);
 		service.setTraceEnabled(true);
 		service.setCredentials(credentials);		
 		// ??? https://computer.domain.contoso.com/EWS/Exchange.asmx
@@ -89,16 +102,22 @@ public class ExchangeWSTest implements InitializingBean {
 		// https://mail.domain.com/EWS/Exchange.asmx
 		// https://owa.it.nttdata-emea.com/owa/
 		// FAILED https://it.nttdata-emea.com/EWS/Exchange.asmx 
-		//service.setUrl(new URI("https://mail.nttdata-emea.com/EWS/Exchange.asmx"));
-		service.autodiscoverUrl(useremail);
+		service.setUrl(new URI("https://127.0.0.1/EWS/Exchange.asmx"));
+		//service.autodiscoverUrl(useremail);
 
-		EmailMessage msg= new EmailMessage(service);
-		msg.setSubject("EWS Test"); 
-		msg.setBody(MessageBody.getMessageBodyFromText("Sent using the EWS Managed API."));
-		msg.getToRecipients().add("askbill@microsoft.com");
-		msg.send();
-
-		return r+"GZip?"+service.getAcceptGzipEncoding();
+		try {
+			EmailMessage msg= new EmailMessage(service);
+			msg.setSubject("EWS Test"); 
+			msg.setBody(MessageBody.getMessageBodyFromText("Sent using the EWS Managed API."));
+			msg.getToRecipients().add("askbill@microsoft.com");			
+			msg.save();			
+			//msg.send();
+			logger.info("SENT!");
+			return r+"GZip?"+service.getAcceptGzipEncoding();
+		}catch(Throwable t){
+			logger.error("FATAL:",t);
+			throw new RuntimeException("FAILED TEST SEND",t);
+		}
 	}
 
 
@@ -107,12 +126,14 @@ public class ExchangeWSTest implements InitializingBean {
 
 		Log logger = LogFactory.getLog(ExchangeWSTest.class);
 
-		logger.info("http.proxyHost="+System.getProperty("http.proxyHost"));
-
-		System.setProperty("http.proxyHost", "10.0.2.2");
-		System.setProperty("http.proxyPort", "808");
+		InstallCert.loadTrustStore(new File("jssecacerts"));
+		TrustAllX509TrustManager.trustEveryOne();
 
 		logger.info("http.proxyHost="+System.getProperty("http.proxyHost"));
+
+		//		System.setProperty("http.proxyHost", "10.0.2.2");
+		//		System.setProperty("http.proxyPort", "808");
+		//		logger.info("http.proxyHost="+System.getProperty("http.proxyHost"));
 
 		// BUG YOU MUST GOT IT BEFORE RUNNING SPRING OR YOU WILL GET UNSUPPORTED ERROR:
 		logger.info("Creating Tray ICON");
